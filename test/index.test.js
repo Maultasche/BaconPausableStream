@@ -410,6 +410,60 @@ describe('testing the creation of pausable stream,', () => {
 		});
 	});
 	
+	test('the stream works correctly when we use a generator that doesn\'t return ' +
+		'anything', () => {		
+		//Create the test data
+		const testData = _.range(30);
+
+		//This generator function doesn't return anything, which means that it returns
+		//an undefined value
+		function* generator() {
+			for(item of testData) {
+				yield item;
+			}
+		}
+		
+		//Create the pausable stream that emits the test data
+		const testStream = createPausableStream(generator());
+
+		//Add an undefined value to the end of the test data so that it matches
+		//what the stream will produce
+		const expectedData = [...testData, undefined];
+		
+		//Test the data streaming
+		return testDataStreaming(testStream, expectedData);
+	});
+	
+	test('the stream works correctly when we use a generator that returns ' +
+		'Bacon.End before it has finished', () => {		
+		//Create the test data
+		const testData = _.range(30);
+
+		//This generator function yields Bacon.End before it has finished
+		function* generator() {
+			for(item of testData) {
+				if(item <= 20) {
+					yield item;
+				}
+				else {
+					yield new Bacon.End();
+				}
+			}
+			
+			return new Bacon.End();
+		}
+		
+		//Create the pausable stream that emits the test data
+		const testStream = createPausableStream(generator());
+
+		//Add an undefined value to the end of the test data so that it matches
+		//what the stream will produce
+		const expectedData = _.range(21);
+		
+		//Test the data streaming
+		return testDataStreaming(testStream, expectedData);
+	});
+	
 	/**
 	 * Tests the streaming of data from a pausable stream
 	 *

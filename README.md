@@ -1,4 +1,6 @@
-Creates a Bacon stream that can pause the generation of stream events. This is useful for preventing excessive memory use from buffering of those events when they cannot be processed quickly enough.
+Creates a Bacon stream that can pause the generation of stream events. This is useful when you want to actually pause the generation of events rather than buffer events that are still being generator.
+
+For example, you could use this for preventing excessive memory use from the buffering of large numbers of rapidly-generated events when they cannot be processed quickly enough. Pause event generation when enough events have been generated and resume event generation when more events are needed..
 
 Creating a pausable Bacon stream can be done by passing a generator function that generates the
 events for the stream, like so:
@@ -26,10 +28,6 @@ The generator function returns the next event value, which can sometimes involve
 The stream will end either when Bacon.End is yielded or returned or when the generator ends. If the generator ends by returning another value, that value will be emitted as an event and the stream will immediately be ended after that. Note that Javascript functions return undefined by default, so if you have a generator function that doesn't return anything, you will see an event emitted with an undefined value followed by the end of the stream.
 
 
-- test that generator emitting a specific Bacon.End object to end the stream causes the stream to end normally
-- test passing a normal function as the generator
-- test passing a generator function as the generator
-- test passing a normal object as the generator
 - test passing Bacon.End in the middle of a generator rather than at the end
 - test using a generator that doesn't return anything (undefined)
 

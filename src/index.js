@@ -62,7 +62,7 @@ function createPausableStream(generator, initiallyPaused = false) {
 							hasEnded = true;
 							
 							//If the last value was *not* Bacon.End, emit Bacon.End
-							if(isBaconEnd(currentValue.value)) {
+							if(!isBaconEnd(currentValue.value)) {
 								sink(new Bacon.End());
 							}
 						}					
