@@ -39,6 +39,11 @@ const Bacon = require('baconjs');
  *	generator function.
  */
 function createPausableStream(generatorFunction, initiallyPaused = false) {
+	//If the generator function is not a function, throw an error
+	if(typeof generatorFunction !== 'function') {
+		throw new Error('generatorFunction is not a function');
+	}
+	
 	//Keep track of whether the stream is currently paused or has ended
 	let paused = null;
 	let hasEnded = false;
