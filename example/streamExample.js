@@ -2,28 +2,19 @@ const createPausableStream = require('../src/index');
 const _ = require('lodash');
 const Bacon = require('baconjs');
 
-//This creates a stream event generator function that generates a series
+//This creates a stream event generator that generates a series
 //of numbers from 1 to maxNum.
-function createNumberGenerator(maxNum) {
-	let currentNum = 1;
-	
-	return () => {
-		let streamEvent = currentNum;
-		
-		if(currentNum > maxNum) {
-			streamEvent = new Bacon.End();
-		}
-		else {
-			currentNum = currentNum + 1;
-		}
-		
+function* createNumberGenerator(maxNum) {
+	for(number of _.range(1, maxNum + 1)) {
 		//Log a message when the event is generated so that we can see
 		//that the stream is truly paused and not just buffering the generated
 		//events
-		console.log("Event generated: ", streamEvent);
-			
-		return streamEvent;
-	};
+		console.log("Event generated: ", number);
+		
+		yield number;
+	}
+	
+	return Bacon.End();
 }
 
 //Create a pausable stream that emits number 1 to 20

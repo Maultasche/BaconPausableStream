@@ -40,18 +40,51 @@ describe('testing the creation of pausable stream,', () => {
 	});
 	
 	test('the stream creation function does not throw an error when the generator ' +
-		'function is a function', () => {
+		'is a generator object', () => {
+		function* testGenerator() {
+			yield 1;
+			
+			return 2;
+		}
+		
 		//Create a pausable stream using an array instead of a function and verify
 		//that it throws an exception
-		expect(() => createPausableStream(() => {})).not.toThrow();
+		expect(() => createPausableStream(testGenerator())).not.toThrow();
 	});
 	
 	test('the stream creation function throws an error when the generator ' +
-		'function is not actually a function', () => {
-		//Create a pausable stream using an array instead of a function and verify
-		//that it throws an exception
-		expect(() => createPausableStream([])).toThrow();
+		'object is actually a function', () => {
+		//Create a pausable stream using a function instead of a 
+		//generator object and verify that it throws an exception
+		expect(() => createPausableStream(() => {})).toThrow();
 	});
+	
+	test('the stream creation function throws an error when the generator ' +
+		'object is actually a generator function', () => {
+		function* testGenerator() {
+			yield 1;
+			
+			return 2;
+		}
+		
+		//Create a pausable stream using a generator function instead of a 
+		//generator object and verify that it throws an exception
+		expect(() => createPausableStream(testGenerator)).toThrow();
+	});
+	
+	test('the stream creation function throws an error when the generator ' +
+		'object is actually a normal object', () => {
+		//Create a pausable stream using a normal object instead of a 
+		//generator object and verify that it throws an exception
+		expect(() => createPausableStream({})).toThrow();
+	});
+	
+	test('the stream creation function throws an error when the generator ' +
+		'object is actually an array', () => {
+		//Create a pausable stream using a normal object instead of a 
+		//generator object and verify that it throws an exception
+		expect(() => createPausableStream([])).toThrow();
+	});	
 	
 	test('the stream can be paused once with the stream initially unpaused', () => {
 		return new Promise((resolve, reject) => {
@@ -413,11 +446,8 @@ describe('testing the creation of pausable stream,', () => {
 	 * @returns a pausable stream that emits that test data
 	 */
 	function createTestPausableStream(testData, initiallyPaused = false) {
-		//Create an iterator that emits the test data
-		const testDataIter = generateTestData(testData);
-		
 		//Create the pausable stream that emits the test data
-		const testStream = createPausableStream(() => testDataIter.next().value, 
+		const testStream = createPausableStream(generateTestData(testData), 
 			initiallyPaused);		
 		
 		return testStream;
@@ -434,6 +464,6 @@ describe('testing the creation of pausable stream,', () => {
 			yield data;
 		}
 
-		yield new Bacon.End();		
+		return new Bacon.End();		
 	}
 });

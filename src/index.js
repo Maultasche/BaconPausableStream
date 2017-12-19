@@ -1,28 +1,10 @@
 const Bacon = require('baconjs');
-
-/**
- * This is the same as the sink() function that is passed to Bacon.fromBinder. See
- * the Bacon.js API documentation for more details.
- * @callback BaconSink
- * @param {Bacon.Event|*} event - A Bacon event object or the value to be emitted in the
- * 	resulting event stream
- */
  
 /**
- * This function 
- * is exactly the same generator function that would be passed to Bacon.fromBinder().
- * It gets called to generate events that are emitted in the resulting stream. See the
- * description of Bacon.fromBinder in the Bacon.js API documentation for more information.
- * @callback GeneratorFunction
- * @return
- */
-
- 
-/**
- * Creates a Bacon stream whose source is pausable. This function works just like
- * Bacon.fromBinder() where a function is passed to it that generates stream
- * events. The only difference is that the resulting stream has pause() and 
+ * Creates a Bacon stream whose source is pausable. The resulting stream has pause() and 
  * resume() functions that allow the stream to be paused and resumed.
+ *
+ * The stream will end as soon as Bacon.End is returned or the generator finishes.
  *
  * The pause and resume functionality is only available on the stream that is created,
  * and not derived streams that are created from the initial stream using Bacon functions
@@ -30,18 +12,17 @@ const Bacon = require('baconjs');
  *
  * The stream always starts out unpaused.
  *
- * @param {GeneratorFunction} - A Bacon generator function that will generate the events
- *	for the resulting stream. This is the same callback function that is passed to 
- *	Bacon.fromBinder().
+ * @param {Object} - A generator object that will generate the events
+ *	for the resulting stream.
  * @param {boolean} [initiallyPaused] - Controls whether the stream is initially paused
  *	after it has been created. This parameter defaults to false.
  * @returns a pausable and resumable Bacon stream that emits the events created by the
- *	generator function.
+ *	generator object.
  */
-function createPausableStream(generatorFunction, initiallyPaused = false) {
-	//If the generator function is not a function, throw an error
-	if(typeof generatorFunction !== 'function') {
-		throw new Error('generatorFunction is not a function');
+function createPausableStream(generator, initiallyPaused = false) {
+	//If the generator function is not an object, throw an error
+	if(typeof generator !== 'object' || generator.next === undefined) {
+		throw new Error('the generator is not a generator object');
 	}
 	
 	//Keep track of whether the stream is currently paused or has ended
@@ -54,22 +35,9 @@ function createPausableStream(generatorFunction, initiallyPaused = false) {
 	const pauseStream = new Bacon.Bus();
 	const pauseProperty = pauseStream.toProperty(initiallyPaused);	
 	
-	//Wrap the generator function in a function that will stop calling the generator
-	//function if the stream is paused
+	//Wrap the generator in a function that will stop calling the generator
+	//if the stream is paused
 	const pausableStream = Bacon.fromBinder(sink => {
-		//Wrap the sink callback in our own callback so that we can detect when
-		//the stream has ended when sink() is passed a Bacon.End event
-		const pauseSink = streamEvent => {
-			//If this event is an End event, set the flag that indicates that the
-			//stream has ended
-			if(streamEvent.isEnd && streamEvent.isEnd()) {
-				hasEnded = true;
-			}
-
-			//Pass the event onto the Bacon sink function
-			sink(streamEvent);
-		}
-		
 		//Whenever the pause property changes, react accordingly
 		pauseProperty.onValue(pauseValue => {
 			//Only do something if the pause value has changed
@@ -82,7 +50,28 @@ function createPausableStream(generatorFunction, initiallyPaused = false) {
 				//start a recursive chain of generator function calls to
 				//generate the stream values				
 				if(!paused && !hasEnded) {
-					repeatUntilPaused(() => pauseSink(generatorFunction()));
+					repeatUntilPaused(() => {
+						//Get the current value from the generator
+						const currentValue = generator.next();
+
+						//Emit the value
+						sink(currentValue.value);
+						
+						if(currentValue.done) {
+							//If this is the last value, indicate that the stream has ended
+							hasEnded = true;
+							
+							//If the last value was *not* Bacon.End, emit Bacon.End
+							if(isBaconEnd(currentValue.value)) {
+								sink(new Bacon.End());
+							}
+						}					
+						else if(isBaconEnd(currentValue.value)) {
+							//If this is not the last value, but the value is Bacon.End, indicate
+							//that the stream has ended
+							hasEnded = true;
+						}
+					});
 				}				
 			}
 		});			
@@ -92,6 +81,16 @@ function createPausableStream(generatorFunction, initiallyPaused = false) {
 	//values to the pause stream
 	pausableStream.pause = () => pauseStream.push(true);
 	pausableStream.resume = () => pauseStream.push(false);	
+	
+	/**
+	 * Indicates whether a value is a Bacon.End object
+	 *
+	 * @param {*} value - the value to be examined
+	 * @returns true if the value is a Bacon.End object, otherwise false
+	 */
+	function isBaconEnd(value) {
+		return value && typeof value.isEnd === 'function' && value.isEnd();
+	}
 	
 	/**
 	 * Asynchronously and recursively calls a callback function, repeating until
