@@ -12,7 +12,7 @@
   "license": "MIT",
   "scripts": {
     "test": "jest",
-    "fileExample": "node example/fileExample.js"
+    "streamExample": "node example/streamExample.js"
   },
   "devDependencies": {
     "jest": "^22.0.1",

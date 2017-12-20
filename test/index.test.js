@@ -442,7 +442,7 @@ describe('testing the creation of pausable stream,', () => {
 		//This generator function yields Bacon.End before it has finished
 		function* generator() {
 			for(item of testData) {
-				if(item <= 20) {
+				if(item !== 21) {
 					yield item;
 				}
 				else {

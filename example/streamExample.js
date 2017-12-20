@@ -4,7 +4,7 @@ const Bacon = require('baconjs');
 
 //This creates a stream event generator that generates a series
 //of numbers from 1 to maxNum.
-function* createNumberGenerator(maxNum) {
+function* generateNumbers(maxNum) {
 	for(number of _.range(1, maxNum + 1)) {
 		//Log a message when the event is generated so that we can see
 		//that the stream is truly paused and not just buffering the generated
@@ -18,7 +18,7 @@ function* createNumberGenerator(maxNum) {
 }
 
 //Create a pausable stream that emits number 1 to 20
-const numberStream = createPausableStream(createNumberGenerator(20));
+const numberStream = createPausableStream(generateNumbers(20));
 
 //Map the number stream to a square stream, where each number is squared
 const squareStream = numberStream.map(number => number * number);
