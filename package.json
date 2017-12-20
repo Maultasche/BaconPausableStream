@@ -1,6 +1,6 @@
 {
   "name": "bacon-pausable-stream",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Creates a Bacon stream that can pause the generation of stream events",
   "keywords": [
     "bacon",
