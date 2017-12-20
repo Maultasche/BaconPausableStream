@@ -135,7 +135,7 @@ yarn streamExample
 or
 
 ```
-node example/streamExample.js```
+node example/streamExample.js
 ```
 
 The initial output will look like this:
